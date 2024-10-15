@@ -1,92 +1,55 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="utf-8">
-    <title>Space Portfolio</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+    <title>A-Frame Following Camera Scene</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe-master.min.js"></script>
     <script>
-        AFRAME.registerComponent('spaceship-control', {
-            init: function () {
-                this.spaceship = this.el.object3D;
-                this.camera = document.querySelector('#camera').object3D;
-                this.cameraRig = document.querySelector('#camera-rig').object3D;
-                
-                this.velocity = new THREE.Vector3();
-                this.acceleration = new THREE.Vector3();
-                this.rotationSpeed = 0.03;
-                this.maxSpeed = 0.2;
-
-                document.addEventListener('keydown', this.onKeyDown.bind(this));
-                document.addEventListener('keyup', this.onKeyUp.bind(this));
-            },
-            
-            tick: function (time, deltaTime) {
-                // Update velocity
-                this.velocity.add(this.acceleration);
-                this.velocity.clampScalar(-this.maxSpeed, this.maxSpeed);
-                
-                // Apply damping
-                this.velocity.multiplyScalar(0.98);
-                
-                // Move spaceship
-                let movement = this.velocity.clone().applyQuaternion(this.spaceship.quaternion);
-                this.spaceship.position.add(movement);
-                
-                // Update camera position
-                let cameraOffset = new THREE.Vector3(0, 5, 15);
-                cameraOffset.applyQuaternion(this.spaceship.quaternion);
-                this.cameraRig.position.copy(this.spaceship.position).add(cameraOffset);
-                this.cameraRig.lookAt(this.spaceship.position);
-            },
-            
-            onKeyDown: function (event) {
-                switch(event.key.toLowerCase()) {
-                    case 'w': this.acceleration.z = -0.01; break;
-                    case 's': this.acceleration.z = 0.01; break;
-                    case 'a': this.spaceship.rotateY(this.rotationSpeed); break;
-                    case 'd': this.spaceship.rotateY(-this.rotationSpeed); break;
-                }
-            },
-            
-            onKeyUp: function (event) {
-                switch(event.key.toLowerCase()) {
-                    case 'w':
-                    case 's':
-                        this.acceleration.z = 0;
-                        break;
-                }
-            }
-        });
-    </script>
-</head>
-<body>
-    <a-scene>
-        <a-assets>
-            <!-- You can add your spaceship model here -->
-        </a-assets>
-
-        <!-- Spaceship -->
-        <a-entity id="spaceship" 
-                  spaceship-control
-                  position="0 0 0">
-            <a-box color="blue" width="1" height="0.5" depth="2"></a-box>
-        </a-entity>
-
-        <!-- Camera rig -->
-        <a-entity id="camera-rig">
-            <a-camera id="camera" position="0 5 15" look-controls="enabled: false"></a-camera>
-        </a-entity>
-
-        <!-- Celestial objects (placeholders for your portfolio content) -->
-        <a-sphere position="-10 1 -10" radius="1" color="red"></a-sphere>
-        <a-box position="10 1 -15" width="2" height="2" depth="2" color="green"></a-box>
-        <a-cylinder position="0 1 -20" radius="1" height="2" color="yellow"></a-cylinder>
-
-        <!-- Space environment -->
-        <a-sky color="#000000"></a-sky>
+      AFRAME.registerComponent('player-movement', {
+        init: function () {
+          this.velocity = new THREE.Vector3();
+          this.keyPressed = {};
+          
+          window.addEventListener('keydown', this.onKeyDown.bind(this));
+          window.addEventListener('keyup', this.onKeyUp.bind(this));
+        },
         
-        <!-- Starfield -->
-        <a-entity position="0 0 0" particle-system="preset: dust; particleCount: 5000; color: #FFFFFF"></a-entity>
+        onKeyDown: function (event) {
+          this.keyPressed[event.key.toLowerCase()] = true;
+        },
+        
+        onKeyUp: function (event) {
+          this.keyPressed[event.key.toLowerCase()] = false;
+        },
+        
+        tick: function (time, timeDelta) {
+          const speed = 0.05;
+          this.velocity.set(0, 0, 0);
+          
+          if (this.keyPressed['w']) this.velocity.z -= speed;
+          if (this.keyPressed['s']) this.velocity.z += speed;
+          if (this.keyPressed['a']) this.velocity.x -= speed;
+          if (this.keyPressed['d']) this.velocity.x += speed;
+          
+          this.el.object3D.position.add(this.velocity);
+          
+          // Update camera position
+          const camera = document.querySelector('#camera');
+          camera.object3D.position.x = this.el.object3D.position.x;
+          camera.object3D.position.z = this.el.object3D.position.z + 5;
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene>
+      <a-box id="player" position="0 0.5 0" color="blue" player-movement></a-box>
+      
+      <a-camera id="camera" position="0 5 5" rotation="-45 0 0"></a-camera>
+      
+      <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#7BC8A4"></a-plane>
+      
+      <a-sky color="#ECECEC"></a-sky>
     </a-scene>
-</body>
+  </body>
 </html>
