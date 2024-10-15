@@ -1,86 +1,92 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
-    <title>Audrey's Portfolio</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <title>Space Portfolio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
     <script>
-      AFRAME.registerComponent('spaceship-controller', {
-        init: function () {
-          this.ship = this.el;
-          this.camera = document.querySelector('#camera');
-          this.cameraRig = document.querySelector('#camera-rig');
-          
-          // Set up key listeners
-          document.addEventListener('keydown', this.onKeyDown.bind(this));
-          document.addEventListener('keyup', this.onKeyUp.bind(this));
-          
-          this.velocity = new THREE.Vector3();
-          this.acceleration = new THREE.Vector3();
-          this.rotationSpeed = 0.05;
-          this.maxSpeed = 0.5;
-        },
-        
-        onKeyDown: function (event) {
-          switch(event.key) {
-            case 'w': this.acceleration.z = -0.01; break;
-            case 's': this.acceleration.z = 0.01; break;
-            case 'a': this.ship.object3D.rotateY(this.rotationSpeed); break;
-            case 'd': this.ship.object3D.rotateY(-this.rotationSpeed); break;
-          }
-        },
-        
-        onKeyUp: function (event) {
-          switch(event.key) {
-            case 'w':
-            case 's':
-              this.acceleration.z = 0;
-              break;
-          }
-        },
-        
-        tick: function (time, timeDelta) {
-          // Update velocity
-          this.velocity.add(this.acceleration);
-          this.velocity.clampScalar(-this.maxSpeed, this.maxSpeed);
-          
-          // Move ship
-          let movement = this.velocity.clone().applyQuaternion(this.ship.object3D.quaternion);
-          this.ship.object3D.position.add(movement);
-          
-          // Update camera position
-          let cameraOffset = new THREE.Vector3(0, 2, 10);
-          cameraOffset.applyQuaternion(this.ship.object3D.quaternion);
-          this.cameraRig.object3D.position.copy(this.ship.object3D.position).add(cameraOffset);
-          this.cameraRig.object3D.quaternion.copy(this.ship.object3D.quaternion);
-        }
-      });
+        AFRAME.registerComponent('spaceship-control', {
+            init: function () {
+                this.spaceship = this.el.object3D;
+                this.camera = document.querySelector('#camera').object3D;
+                this.cameraRig = document.querySelector('#camera-rig').object3D;
+                
+                this.velocity = new THREE.Vector3();
+                this.acceleration = new THREE.Vector3();
+                this.rotationSpeed = 0.03;
+                this.maxSpeed = 0.2;
+
+                document.addEventListener('keydown', this.onKeyDown.bind(this));
+                document.addEventListener('keyup', this.onKeyUp.bind(this));
+            },
+            
+            tick: function (time, deltaTime) {
+                // Update velocity
+                this.velocity.add(this.acceleration);
+                this.velocity.clampScalar(-this.maxSpeed, this.maxSpeed);
+                
+                // Apply damping
+                this.velocity.multiplyScalar(0.98);
+                
+                // Move spaceship
+                let movement = this.velocity.clone().applyQuaternion(this.spaceship.quaternion);
+                this.spaceship.position.add(movement);
+                
+                // Update camera position
+                let cameraOffset = new THREE.Vector3(0, 5, 15);
+                cameraOffset.applyQuaternion(this.spaceship.quaternion);
+                this.cameraRig.position.copy(this.spaceship.position).add(cameraOffset);
+                this.cameraRig.lookAt(this.spaceship.position);
+            },
+            
+            onKeyDown: function (event) {
+                switch(event.key.toLowerCase()) {
+                    case 'w': this.acceleration.z = -0.01; break;
+                    case 's': this.acceleration.z = 0.01; break;
+                    case 'a': this.spaceship.rotateY(this.rotationSpeed); break;
+                    case 'd': this.spaceship.rotateY(-this.rotationSpeed); break;
+                }
+            },
+            
+            onKeyUp: function (event) {
+                switch(event.key.toLowerCase()) {
+                    case 'w':
+                    case 's':
+                        this.acceleration.z = 0;
+                        break;
+                }
+            }
+        });
     </script>
-  </head>
-  <body>
+</head>
+<body>
     <a-scene>
-      <a-assets>
-        <!-- Add your assets here (e.g., spaceship model) -->
-      </a-assets>
+        <a-assets>
+            <!-- You can add your spaceship model here -->
+        </a-assets>
 
-      <!-- Spaceship -->
-      <a-entity id="spaceship" position="0 0 0" spaceship-controller>
-        <a-box color="blue" width="2" height="1" depth="3"></a-box>
-      </a-entity>
+        <!-- Spaceship -->
+        <a-entity id="spaceship" 
+                  spaceship-control
+                  position="0 0 0">
+            <a-box color="blue" width="1" height="0.5" depth="2"></a-box>
+        </a-entity>
 
-      <!-- Camera rig -->
-      <a-entity id="camera-rig">
-        <a-camera id="camera" position="0 2 10" look-controls="enabled: false"></a-camera>
-      </a-entity>
+        <!-- Camera rig -->
+        <a-entity id="camera-rig">
+            <a-camera id="camera" position="0 5 15" look-controls="enabled: false"></a-camera>
+        </a-entity>
 
-      <!-- Simple environment -->
-      <a-sky color="#000000"></a-sky>
-      <a-plane color="#333333" rotation="-90 0 0" width="100" height="100"></a-plane>
+        <!-- Celestial objects (placeholders for your portfolio content) -->
+        <a-sphere position="-10 1 -10" radius="1" color="red"></a-sphere>
+        <a-box position="10 1 -15" width="2" height="2" depth="2" color="green"></a-box>
+        <a-cylinder position="0 1 -20" radius="1" height="2" color="yellow"></a-cylinder>
 
-      <!-- Add some basic celestial objects -->
-      <a-sphere position="-10 5 -20" radius="2" color="red"></a-sphere>
-      <a-sphere position="15 3 -25" radius="1.5" color="green"></a-sphere>
-      <a-box position="0 5 -30" width="5" height="5" depth="5" color="gray"></a-box>
+        <!-- Space environment -->
+        <a-sky color="#000000"></a-sky>
+        
+        <!-- Starfield -->
+        <a-entity position="0 0 0" particle-system="preset: dust; particleCount: 5000; color: #FFFFFF"></a-entity>
     </a-scene>
-  </body>
+</body>
 </html>
